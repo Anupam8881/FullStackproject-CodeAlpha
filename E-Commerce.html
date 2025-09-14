@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sanctuary.com - E-commerce</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .cart-bounce {
+            animation: bounce 0.3s ease-in-out;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <nav class="bg-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-4">
+                    <h1 class="text-2xl font-bold text-blue-600 cursor-pointer" onclick="showPage('home')">🛍️ ShopEasy</h1>
+                </div>
+                <div class="flex items-center space-x-6">
+                    <button onclick="showPage('home')" class="text-gray-700 hover:text-blue-600 transition-colors">Home</button>
+                    <button onclick="showPage('products')" class="text-gray-700 hover:text-blue-600 transition-colors">Products</button>
+                    <div class="relative">
+                        <button onclick="showPage('cart')" class="text-gray-700 hover:text-blue-600 transition-colors flex items-center">
+                            🛒 Cart (<span id="cart-count">0</span>)
+                        </button>
+                    </div>
+                    <div id="auth-buttons">
+                        <button onclick="showPage('login')" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">Login</button>
+                    </div>
+                    <div id="user-menu" class="hidden">
+                        <span id="user-name" class="text-gray-700 mr-2"></span>
+                        <button onclick="logout()" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors">Logout</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div id="home-page" class="page">
+        <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-20">
+            <div class="max-w-7xl mx-auto px-4 text-center">
+                <h2 class="text-5xl font-bold mb-6">Welcome to Sanctuary</h2>
+                <p class="text-xl mb-8">Discover amazing products at unbeatable prices</p>
+                <button onclick="showPage('products')" class="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">Shop Now</button>
+            </div>
+        </div>
+        
+        <div class="max-w-7xl mx-auto px-4 py-16">
+            <h3 class="text-3xl font-bold text-center mb-12"> Products</h3>
+            <div id="featured-products" class="grid grid-cols-1 md:grid-cols-3 gap-8"></div>
+        </div>
+    </div>
+
+    <div id="products-page" class="page hidden">
+        <div class="max-w-7xl mx-auto px-4 py-8">
+            <h2 class="text-3xl font-bold mb-8">All Products</h2>
+            <div class="mb-6">
+                <input type="text" id="search-input" placeholder="Search products..." class="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div id="products-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
+        </div>
+    </div>
+
+    <div id="product-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <h3 id="modal-title" class="text-2xl font-bold"></h3>
+                    <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <div id="modal-image" class="w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center text-4xl"></div>
+                    </div>
+                    <div>
+                        <p id="modal-price" class="text-3xl font-bold text-blue-600 mb-4"></p>
+                        <p id="modal-description" class="text-gray-600 mb-6"></p>
+                        <div class="flex items-center space-x-4 mb-6">
+                            <label class="font-semibold">Quantity:</label>
+                            <button onclick="changeQuantity(-1)" class="bg-gray-200 px-3 py-1 rounded">-</button>
+                            <span id="modal-quantity" class="px-4 py-1 border rounded">1</span>
+                            <button onclick="changeQuantity(1)" class="bg-gray-200 px-3 py-1 rounded">+</button>
+                        </div>
+                        <button onclick="addToCart()" class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold">Add to Cart</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="cart-page" class="page hidden">
+        <div class="max-w-4xl mx-auto px-4 py-8">
+            <h2 class="text-3xl font-bold mb-8">Shopping Cart</h2>
+            <div id="cart-items"></div>
+            <div id="cart-summary" class="mt-8 bg-white p-6 rounded-lg shadow-md">
+                <div class="flex justify-between items-center text-xl font-bold mb-4">
+                    <span>Total: $<span id="cart-total">0.00</span></span>
+                </div>
+                <button onclick="showPage('checkout')" id="checkout-btn" class="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors font-semibold disabled:bg-gray-400" disabled>Proceed to Checkout</button>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="checkout-page" class="page hidden">
+        <div class="max-w-2xl mx-auto px-4 py-8">
+            <h2 class="text-3xl font-bold mb-8">Checkout</h2>
+            <form id="checkout-form" class="space-y-6">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-semibold mb-4">Shipping Information</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input type="text" name="firstName" placeholder="First Name" required class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <input type="text" name="lastName" placeholder="Last Name" required class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <input type="email" name="email" placeholder="Email" required class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 md:col-span-2">
+                        <input type="text" name="address" placeholder="Address" required class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 md:col-span-2">
+                        <input type="text" name="city" placeholder="City" required class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <input type="text" name="zipCode" placeholder="ZIP Code" required class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-semibold mb-4">Payment Information</h3>
+                    <p class="text-sm text-gray-600 mb-4">This is a  checkout- real payment processing</p>
+                    <div class="space-y-4">
+                        <input type="text" placeholder="Card Number (Demo)" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <div class="grid grid-cols-2 gap-4">
+                            <input type="text" placeholder="MM/YY" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <input type="text" placeholder="CVV" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-semibold mb-4">Order Summary</h3>
+                    <div id="checkout-items"></div>
+                    <div class="border-t pt-4 mt-4">
+                        <div class="flex justify-between text-xl font-bold">
+                            <span>Total: $<span id="checkout-total">0.00</span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors font-semibold">Place Order</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="login-page" class="page hidden">
+        <div class="max-w-md mx-auto px-4 py-16">
+            <div class="bg-white p-8 rounded-lg shadow-md">
+                <h2 class="text-2xl font-bold text-center mb-6">Login to Sanctuary.com</h2>
+                <form id="login-form" class="space-y-4">
+                    <input type="email" name="email" placeholder="Email" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="password" name="password" placeholder="Password" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors">Login</button>
+                </form>
+                <p class="text-center mt-4 text-gray-600">
+                    Don't have an account? 
+                    <button onclick="showPage('register')" class="text-blue-600 hover:underline">Register here</button>
+                </p>
+                <div class="mt-4 p-3 bg-gray-100 rounded text-sm text-gray-600">
+                    <strong>Account::</strong><br>
+                    Email: anupamgoutam8@gmail.com.com<br>
+                    Password: pass@123
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="register-page" class="page hidden">
+        <div class="max-w-md mx-auto px-4 py-16">
+            <div class="bg-white p-8 rounded-lg shadow-md">
+                <h2 class="text-2xl font-bold text-center mb-6">Create Account</h2>
+                <form id="register-form" class="space-y-4">
+                    <input type="text" name="name" placeholder="Full Name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="email" name="email" placeholder="Email" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="password" name="password" placeholder="Password" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="password" name="confirmPassword" placeholder="Confirm Password" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button type="submit" class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition-colors">Create Account</button>
+                </form>
+                <p class="text-center mt-4 text-gray-600">
+                    Already have an account? 
+                    <button onclick="showPage('login')" class="text-blue-600 hover:underline">Login here</button>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div id="success-page" class="page hidden">
+        <div class="max-w-2xl mx-auto px-4 py-16 text-center">
+            <div class="bg-white p-8 rounded-lg shadow-md">
+                <div class="text-6xl mb-4">✅</div>
+                <h2 class="text-3xl font-bold text-green-600 mb-4">Order Placed Successfully!</h2>
+                <p class="text-gray-600 mb-6">Thank you for your purchase. Your order has been received and is being processed.</p>
+                <div id="order-details" class="bg-gray-50 p-4 rounded-lg mb-6"></div>
+                <button onclick="showPage('home')" class="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors">Continue Shopping</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const products = [
+            { id: 1, name: "Wireless Headphones", price: 89.99, image: "🎧", description: "High-quality wireless headphones with noise cancellation and 30-hour battery life." },
+            { id: 2, name: "Smart Watch", price: 199.99, image: "⌚", description: "Feature-rich smartwatch with health monitoring, GPS, and 7-day battery life." },
+            { id: 3, name: "Laptop Stand", price: 49.99, image: "💻", description: "Ergonomic aluminum laptop stand with adjustable height and cooling design." },
+            { id: 4, name: "Bluetooth Speaker", price: 79.99, image: "🔊", description: "Portable Bluetooth speaker with 360-degree sound and waterproof design." },
+            { id: 5, name: "Phone Case", price: 24.99, image: "📱", description: "Durable phone case with military-grade protection and wireless charging support." },
+            { id: 6, name: "USB-C Cable", price: 19.99, image: "🔌", description: "Fast-charging USB-C cable with data transfer speeds up to 10Gbps." },
+            { id: 7, name: "Wireless Mouse", price: 39.99, image: "🖱️", description: "Ergonomic wireless mouse with precision tracking and 12-month battery life." },
+            { id: 8, name: "Tablet", price: 299.99, image: "📱", description: "10-inch tablet with high-resolution display and all-day battery life." }
+        ];
+
+        let currentUser = null;
+        let cart = [];
+        let currentProduct = null;
+        let modalQuantity = 1;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUserSession();
+            loadCart();
+            displayProducts();
+            displayFeaturedProducts();
+            updateCartCount();
+            setupSearch();
+        });
+
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => page.classList.add('hidden'));
+            document.getElementById(pageId + '-page').classList.remove('hidden');
+            
+            if (pageId === 'cart') {
+                displayCart();
+            } else if (pageId === 'checkout') {
+                if (!currentUser) {
+                    alert('Please login to proceed with checkout');
+                    showPage('login');
+                    return;
+                }
+                displayCheckout();
+            }
+        }
+
+        function displayProducts() {
+            const grid = document.getElementById('products-grid');
+            grid.innerHTML = products.map(product => createProductCard(product)).join('');
+        }
+
+        function displayFeaturedProducts() {
+            const container = document.getElementById('featured-products');
+            const featured = products.slice(0, 3);
+            container.innerHTML = featured.map(product => createProductCard(product)).join('');
+        }
+
+        function createProductCard(product) {
+            return `
+                <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow fade-in">
+                    <div class="h-48 bg-gray-100 flex items-center justify-center text-6xl">
+                        ${product.image}
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-semibold text-lg mb-2">${product.name}</h3>
+                        <p class="text-gray-600 text-sm mb-3">${product.description.substring(0, 80)}...</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-2xl font-bold text-blue-600">$${product.price}</span>
+                            <button onclick="openProductModal(${product.id})" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                                View Details
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+
+        function openProductModal(productId) {
+            currentProduct = products.find(p => p.id === productId);
+            modalQuantity = 1;
+            
+            document.getElementById('modal-title').textContent = currentProduct.name;
+            document.getElementById('modal-price').textContent = `$${currentProduct.price}`;
+            document.getElementById('modal-description').textContent = currentProduct.description;
+            document.getElementById('modal-image').textContent = currentProduct.image;
+            document.getElementById('modal-quantity').textContent = modalQuantity;
+            
+            document.getElementById('product-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('product-modal').classList.add('hidden');
+        }
+
+        function changeQuantity(delta) {
+            modalQuantity = Math.max(1, modalQuantity + delta);
+            document.getElementById('modal-quantity').textContent = modalQuantity;
+        }
+
+        function addToCart() {
+            if (!currentProduct) return;
+            
+            const existingItem = cart.find(item => item.id === currentProduct.id);
+            if (existingItem) {
+                existingItem.quantity += modalQuantity;
+            } else {
+                cart.push({
+                    ...currentProduct,
+                    quantity: modalQuantity
+                });
+            }
+            
+            saveCart();
+            updateCartCount();
+            closeModal();
+            
+            const cartButton = document.querySelector('button[onclick="showPage(\'cart\')"]');
+            cartButton.classList.add('cart-bounce');
+            setTimeout(() => cartButton.classList.remove('cart-bounce'), 300);
+            
+            alert(`${currentProduct.name} added to cart!`);
+        }
+
+        function removeFromCart(productId) {
+            cart = cart.filter(item => item.id !== productId);
+            saveCart();
+            updateCartCount();
+            displayCart();
+        }
+
+        function updateCartQuantity(productId, newQuantity) {
+            if (newQuantity <= 0) {
+                removeFromCart(productId);
+                return;
+            }
+            
+            const item = cart.find(item => item.id === productId);
+            if (item) {
+                item.quantity = newQuantity;
+                saveCart();
+                updateCartCount();
+                displayCart();
+            }
+        }
+
+        function displayCart() {
+            const container = document.getElementById('cart-items');
+            const checkoutBtn = document.getElementById('checkout-btn');
+            
+            if (cart.length === 0) {
+                container.innerHTML = '<div class="text-center py-8 text-gray-500">Your cart is empty</div>';
+                checkoutBtn.disabled = true;
+                return;
+            }
+            
+            checkoutBtn.disabled = false;
+            container.innerHTML = cart.map(item => `
+                <div class="bg-white p-4 rounded-lg shadow-md mb-4 fade-in">
+                    <div class="flex items-center space-x-4">
+                        <div class="text-4xl">${item.image}</div>
+                        <div class="flex-1">
+                            <h3 class="font-semibold">${item.name}</h3>
+                            <p class="text-gray-600">$${item.price} each</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="updateCartQuantity(${item.id}, ${item.quantity - 1})" class="bg-gray-200 px-2 py-1 rounded">-</button>
+                            <span class="px-3">${item.quantity}</span>
+                            <button onclick="updateCartQuantity(${item.id}, ${item.quantity + 1})" class="bg-gray-200 px-2 py-1 rounded">+</button>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-semibold">$${(item.price * item.quantity).toFixed(2)}</div>
+                            <button onclick="removeFromCart(${item.id})" class="text-red-500 hover:text-red-700 text-sm">Remove</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            updateCartTotal();
+        }
+
+        function updateCartCount() {
+            const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+            document.getElementById('cart-count').textContent = count;
+        }
+
+        function updateCartTotal() {
+            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            document.getElementById('cart-total').textContent = total.toFixed(2);
+        }
+
+        function displayCheckout() {
+            const container = document.getElementById('checkout-items');
+            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            
+            container.innerHTML = cart.map(item => `
+                <div class="flex justify-between items-center py-2">
+                    <span>${item.name} x ${item.quantity}</span>
+                    <span>$${(item.price * item.quantity).toFixed(2)}</span>
+                </div>
+            `).join('');
+            
+            document.getElementById('checkout-total').textContent = total.toFixed(2);
+        }
+
+       
+        function login(email, password) {
+    
+            if (email === 'demo@shopeasy.com' && password === 'demo123') {
+                currentUser = { name: 'Demo User', email: email };
+            } else {
+                
+                const users = JSON.parse(localStorage.getItem('users') || '[]');
+                const user = users.find(u => u.email === email && u.password === password);
+                if (user) {
+                    currentUser = { name: user.name, email: user.email };
+                } else {
+                    throw new Error('Invalid credentials');
+                }
+            }
+            
+            saveUserSession();
+            updateAuthUI();
+            showPage('home');
+        }
+
+        function register(name, email, password, confirmPassword) {
+            if (password !== confirmPassword) {
+                throw new Error('Passwords do not match');
+            }
+            
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            if (users.find(u => u.email === email)) {
+                throw new Error('Email already registered');
+            }
+            
+            users.push({ name, email, password });
+            localStorage.setItem('users', JSON.stringify(users));
+            
+            currentUser = { name, email };
+            saveUserSession();
+            updateAuthUI();
+            showPage('home');
+        }
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('currentUser');
+            updateAuthUI();
+            showPage('home');
+        }
+
+        function updateAuthUI() {
+            const authButtons = document.getElementById('auth-buttons');
+            const userMenu = document.getElementById('user-menu');
+            
+            if (currentUser) {
+                authButtons.classList.add('hidden');
+                userMenu.classList.remove('hidden');
+                document.getElementById('user-name').textContent = `Hello, ${currentUser.name}`;
+            } else {
+                authButtons.classList.remove('hidden');
+                userMenu.classList.add('hidden');
+            }
+        }
+
+        function setupSearch() {
+            const searchInput = document.getElementById('search-input');
+            searchInput.addEventListener('input', function() {
+                const query = this.value.toLowerCase();
+                const filtered = products.filter(product => 
+                    product.name.toLowerCase().includes(query) ||
+                    product.description.toLowerCase().includes(query)
+                );
+                
+                const grid = document.getElementById('products-grid');
+                grid.innerHTML = filtered.map(product => createProductCard(product)).join('');
+            });
+        }
+
+        function saveCart() {
+            localStorage.setItem('cart', JSON.stringify(cart));
+        }
+
+        function loadCart() {
+            cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        }
+
+        function saveUserSession() {
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        }
+
+        function loadUserSession() {
+            const saved = localStorage.getItem('currentUser');
+            if (saved) {
+                currentUser = JSON.parse(saved);
+                updateAuthUI();
+            }
+        }
+
+        
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            try {
+                login(formData.get('email'), formData.get('password'));
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+
+        document.getElementById('register-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            try {
+                register(
+                    formData.get('name'),
+                    formData.get('email'),
+                    formData.get('password'),
+                    formData.get('confirmPassword')
+                );
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+
+        document.getElementById('checkout-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+          
+            const orderNumber = 'ORD-' + Date.now();
+            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            
+            const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+            orders.push({
+                orderNumber,
+                user: currentUser.email,
+                items: [...cart],
+                total,
+                date: new Date().toISOString(),
+                status: 'Processing'
+            });
+            localStorage.setItem('orders', JSON.stringify(orders));
+            
+            document.getElementById('order-details').innerHTML = `
+                <p><strong>Order Number:</strong> ${orderNumber}</p>
+                <p><strong>Total:</strong> $${total.toFixed(2)}</p>
+                <p><strong>Items:</strong> ${cart.length} items</p>
+            `;
+            
+            cart = [];
+            saveCart();
+            updateCartCount();
+            
+            showPage('success');
+        });
+
+        document.getElementById('product-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97ee6847e61c33e4',t:'MTc1NzgzNzQyMS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
