@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> Mini Social Media app</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .heart-bounce { animation: heartBounce 0.3s ease-in-out; }
+        @keyframes heartBounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+  
+    <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+            <h1 class="text-1xl font-bold text-indigo-600">instagram 2.0</h1>
+            <div class="flex items-center space-x-3">
+                <select id="userSelector" class="bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="1"> Anupam Goutam</option>
+                    <option value="2">anamika Yadav</option>
+                    <option value="3">Ajeet Singh </option>
+                </select>
+                <button id="createPostBtn" class="bg-pink-800 text-white px-4 py-2 rounded-lg hover:bg-red-500 transition-colors font-medium">
+                    Create Post
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
+      
+        <div class="lg:col-span-1">
+            <div class="bg-pink-200 rounded-xl shadow-sm border border-gray-200 p-6 sticky top-24">
+                <div id="currentUserProfile" class="text-center">
+                
+                </div>
+                
+                
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <h3 class="font-semibold text-gray-900 mb-5">Suggested Users</h3>
+                    <div id="suggestedUsers" class="space-y-3">
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+
+      
+        <div class="lg:col-span-3">
+            
+            <div id="createPostModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4">
+                <div class="bg-pink-200 rounded-xl shadow-xl max-w-md w-full p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900">Create New Post</h3>
+                        <button id="closeModal" class="text-gray-400 hover:text-gray-600">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <textarea id="postContent" placeholder="What's on your mind?" class="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" rows="4"></textarea>
+                    <div class="flex justify-end mt-4 space-x-3">
+                        <button id="cancelPost" class="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors">Cancel</button>
+                        <button id="submitPost" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors font-medium">Post</button>
+                    </div>
+                </div>
+            </div>
+
+        
+            <div id="postsContainer" class="space-y-6">
+              
+            </div>
+        </div>
+    </div>
+
+    <script>
+        
+        let users = [
+            {
+                id: 1,
+                name: "Anupam Goutam",
+                username: "anu@12",
+                avatar: "🌸",
+                bio: "FrontEnd developer,Content Creater",
+                followers: 234,
+                following: 189,
+                posts: 42
+            },
+            {
+                id: 2,
+                name: "Anamika Yadav",
+                username: "ana@9191",
+                avatar: "🚀",
+                bio: "Full-stack developer building the future",
+                followers: 156,
+                following: 98,
+                posts: 20
+            },
+            {
+                id: 3,
+                name: "Ajeet Singh",
+                username: "@carol_travels",
+                avatar: "🌍",
+                bio: "Travel blogger exploring the world 🎒,Fullstack Developer",
+                followers: 512,
+                following: 267,
+                posts: 80
+            }
+        ];
+
+        let posts = [
+            {
+                id: 1,
+                userId: 1,
+                content: "A frontend developer designs and builds the visible, interactive parts of a website or application, focusing on user experience and interface using HTML, CSS, and JavaScript ✨",
+                timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
+                likes: 23,
+                likedBy: [2, 3],
+                comments: [
+                    { id: 1, userId: 2, content: "yes we want to join ", timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000) },
+                    { id: 2, userId: 3, content: "So talented! Can't wait to see more of your work", timestamp: new Date(Date.now() - 30 * 60 * 1000) }
+                ]
+            },
+            {
+                id: 2,
+                userId: 2,
+                content: "Working on a new React project today. The component architecture is coming together nicely! Anyone else excited about the new React features? 💻",
+                timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000),
+                likes: 15,
+                likedBy: [1],
+                comments: [
+                    { id: 3, userId: 1, content: "React hooks are game changers! Good luck with your project 🚀", timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000) }
+                ]
+            },
+            {
+                id: 3,
+                userId: 3,
+                content: "Sunset from my hotel balcony in Santorini. Sometimes you just have to stop and appreciate the beauty around us 🌅",
+                timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000),
+                likes: 45,
+                likedBy: [1, 2],
+                comments: []
+            }
+        ];
+
+        let follows = [
+            { followerId: 1, followingId: 2 },
+            { followerId: 1, followingId: 3 },
+            { followerId: 2, followingId: 1 },
+            { followerId: 3, followingId: 1 }
+        ];
+
+        let currentUserId = 1;
+
+    
+        function getUserById(id) {
+            return users.find(user => user.id === id);
+        }
+
+        function isFollowing(followerId, followingId) {
+            return follows.some(f => f.followerId === followerId && f.followingId === followingId);
+        }
+
+        function formatTimeAgo(date) {
+            const now = new Date();
+            const diffInSeconds = Math.floor((now - date) / 1000);
+            
+            if (diffInSeconds < 60) return 'Just now';
+            if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+            if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+            return `${Math.floor(diffInSeconds / 86400)}d ago`;
+        }
+
+        
+        function renderUserProfile(user) {
+            return `
+                <div class="w-20 h-20 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center text-3xl mx-auto mb-4">
+                    ${user.avatar}
+                </div>
+                <h2 class="font-bold text-lg text-gray-900">${user.name}</h2>
+                <p class="text-gray-600 text-sm mb-3">${user.username}</p>
+                <p class="text-gray-700 text-sm mb-4">${user.bio}</p>
+                <div class="flex justify-around text-center">
+                    <div>
+                        <div class="font-semibold text-gray-900">${user.posts}</div>
+                        <div class="text-xs text-gray-600">Posts</div>
+                    </div>
+                    <div>
+                        <div class="font-semibold text-gray-900">${user.followers}</div>
+                        <div class="text-xs text-gray-600">Followers</div>
+                    </div>
+                    <div>
+                        <div class="font-semibold text-gray-900">${user.following}</div>
+                        <div class="text-xs text-gray-600">Following</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderSuggestedUsers() {
+            const currentUser = getUserById(currentUserId);
+            const suggested = users.filter(user => 
+                user.id !== currentUserId && !isFollowing(currentUserId, user.id)
+            );
+
+            return suggested.map(user => `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center text-lg">
+                            ${user.avatar}
+                        </div>
+                        <div>
+                            <div class="font-medium text-sm text-gray-900">${user.name}</div>
+                            <div class="text-xs text-gray-600">${user.username}</div>
+                        </div>
+                    </div>
+                    <button onclick="followUser(${user.id})" class="text-indigo-600 hover:text-indigo-700 text-sm font-medium">
+                        Follow
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function renderPost(post) {
+            const author = getUserById(post.userId);
+            const isLiked = post.likedBy.includes(currentUserId);
+            
+            return `
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 fade-in">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="w-12 h-12 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center text-xl">
+                            ${author.avatar}
+                        </div>
+                        <div class="flex-1">
+                            <div class="font-semibold text-gray-900">${author.name}</div>
+                            <div class="text-sm text-gray-600">${author.username} • ${formatTimeAgo(post.timestamp)}</div>
+                        </div>
+                        ${post.userId !== currentUserId ? `
+                            <button onclick="toggleFollow(${post.userId})" class="text-sm font-medium ${isFollowing(currentUserId, post.userId) ? 'text-gray-600' : 'text-indigo-600 hover:text-indigo-700'}">
+                                ${isFollowing(currentUserId, post.userId) ? 'Following' : 'Follow'}
+                            </button>
+                        ` : ''}
+                    </div>
+                    
+                    <p class="text-gray-800 mb-4 leading-relaxed">${post.content}</p>
+                    
+                    <div class="flex items-center justify-between pt-4 border-t border-gray-100">
+                        <button onclick="toggleLike(${post.id})" class="flex items-center space-x-2 text-gray-600 hover:text-red-500 transition-colors">
+                            <span class="text-xl ${isLiked ? 'text-red-500 heart-bounce' : ''}">${isLiked ? '❤️' : '🤍'}</span>
+                            <span class="text-sm font-medium">${post.likes} ${post.likes === 1 ? 'like' : 'likes'}</span>
+                        </button>
+                        
+                        <button onclick="toggleComments(${post.id})" class="flex items-center space-x-2 text-gray-600 hover:text-indigo-500 transition-colors">
+                            <span class="text-xl">💬</span>
+                            <span class="text-sm font-medium">${post.comments.length} ${post.comments.length === 1 ? 'comment' : 'comments'}</span>
+                        </button>
+                    </div>
+                    
+                    <div id="comments-${post.id}" class="mt-4 space-y-3 hidden">
+                        ${post.comments.map(comment => {
+                            const commentAuthor = getUserById(comment.userId);
+                            return `
+                                <div class="flex space-x-3 bg-gray-50 rounded-lg p-3">
+                                    <div class="w-8 h-8 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center text-sm">
+                                        ${commentAuthor.avatar}
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="flex items-center space-x-2 mb-1">
+                                            <span class="font-medium text-sm text-gray-900">${commentAuthor.name}</span>
+                                            <span class="text-xs text-gray-600">${formatTimeAgo(comment.timestamp)}</span>
+                                        </div>
+                                        <p class="text-sm text-gray-800">${comment.content}</p>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                        
+                        <div class="flex space-x-3 mt-3">
+                            <div class="w-8 h-8 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center text-sm">
+                                ${getUserById(currentUserId).avatar}
+                            </div>
+                            <div class="flex-1 flex space-x-2">
+                                <input type="text" id="comment-input-${post.id}" placeholder="Write a comment..." class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                <button onclick="addComment(${post.id})" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium">
+                                    Post
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+      
+        function toggleLike(postId) {
+            const post = posts.find(p => p.id === postId);
+            const likedIndex = post.likedBy.indexOf(currentUserId);
+            
+            if (likedIndex > -1) {
+                post.likedBy.splice(likedIndex, 1);
+                post.likes--;
+            } else {
+                post.likedBy.push(currentUserId);
+                post.likes++;
+            }
+            
+            renderPosts();
+        }
+
+        function toggleComments(postId) {
+            const commentsDiv = document.getElementById(`comments-${postId}`);
+            commentsDiv.classList.toggle('hidden');
+        }
+
+        function addComment(postId) {
+            const input = document.getElementById(`comment-input-${postId}`);
+            const content = input.value.trim();
+            
+            if (content) {
+                const post = posts.find(p => p.id === postId);
+                const newComment = {
+                    id: Date.now(),
+                    userId: currentUserId,
+                    content: content,
+                    timestamp: new Date()
+                };
+                
+                post.comments.push(newComment);
+                input.value = '';
+                renderPosts();
+                
+              
+                setTimeout(() => {
+                    document.getElementById(`comments-${postId}`).classList.remove('hidden');
+                }, 100);
+            }
+        }
+
+        function followUser(userId) {
+            if (!isFollowing(currentUserId, userId)) {
+                follows.push({ followerId: currentUserId, followingId: userId });
+                
+              
+                const userToFollow = getUserById(userId);
+                const currentUser = getUserById(currentUserId);
+                userToFollow.followers++;
+                currentUser.following++;
+                
+                renderAll();
+            }
+        }
+
+        function toggleFollow(userId) {
+            const followIndex = follows.findIndex(f => f.followerId === currentUserId && f.followingId === userId);
+            const userToToggle = getUserById(userId);
+            const currentUser = getUserById(currentUserId);
+            
+            if (followIndex > -1) {
+                follows.splice(followIndex, 1);
+                userToToggle.followers--;
+                currentUser.following--;
+            } else {
+                follows.push({ followerId: currentUserId, followingId: userId });
+                userToToggle.followers++;
+                currentUser.following++;
+            }
+            
+            renderAll();
+        }
+
+        function createPost() {
+            const content = document.getElementById('postContent').value.trim();
+            
+            if (content) {
+                const newPost = {
+                    id: Date.now(),
+                    userId: currentUserId,
+                    content: content,
+                    timestamp: new Date(),
+                    likes: 0,
+                    likedBy: [],
+                    comments: []
+                };
+                
+                posts.unshift(newPost);
+                
+              
+                const currentUser = getUserById(currentUserId);
+                currentUser.posts++;
+                
+                document.getElementById('postContent').value = '';
+                document.getElementById('createPostModal').classList.add('hidden');
+                renderAll();
+            }
+        }
+
+        function switchUser(userId) {
+            currentUserId = parseInt(userId);
+            renderAll();
+        }
+
+        
+        function renderPosts() {
+            const container = document.getElementById('postsContainer');
+            container.innerHTML = posts.map(post => renderPost(post)).join('');
+        }
+
+        function renderAll() {
+            const currentUser = getUserById(currentUserId);
+            document.getElementById('currentUserProfile').innerHTML = renderUserProfile(currentUser);
+            document.getElementById('suggestedUsers').innerHTML = renderSuggestedUsers();
+            renderPosts();
+        }
+
+        
+        document.getElementById('createPostBtn').addEventListener('click', () => {
+            document.getElementById('createPostModal').classList.remove('hidden');
+            document.getElementById('createPostModal').classList.add('flex');
+        });
+
+        document.getElementById('closeModal').addEventListener('click', () => {
+            document.getElementById('createPostModal').classList.add('hidden');
+            document.getElementById('createPostModal').classList.remove('flex');
+        });
+
+        document.getElementById('cancelPost').addEventListener('click', () => {
+            document.getElementById('createPostModal').classList.add('hidden');
+            document.getElementById('createPostModal').classList.remove('flex');
+            document.getElementById('postContent').value = '';
+        });
+
+        document.getElementById('submitPost').addEventListener('click', createPost);
+
+        document.getElementById('userSelector').addEventListener('change', (e) => {
+            switchUser(e.target.value);
+        });
+
+      
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && e.target.id && e.target.id.startsWith('comment-input-')) {
+                const postId = e.target.id.split('-')[2];
+                addComment(parseInt(postId));
+            }
+        });
+
+      
+        document.getElementById('postContent').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                createPost();
+            }
+        });
+
+      
+        renderAll();
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97ef2f35a4c854b0',t:'MTc1Nzg0NTU2OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
